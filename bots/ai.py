@@ -1,4 +1,4 @@
-import rg, random
+import rg, random, pickle, os.path
 # 
 ### TODO
 # account for spawn on turn 10
@@ -16,11 +16,13 @@ class Robot:
         # GLOBALS
         global EXPERT
 
+        '''
         ### DEBUG *** PRINT ###
         print "\n ***** Robot #" + str(self.player_id) + " *****"
         print "Previous:  " + str(self.previous)
         print "Current:   " + str(self.location)
         print "Utilities: " + str(len(self.utility))
+        '''
 
         # LOCALS
         state = self.getState(game)
@@ -39,7 +41,7 @@ class Robot:
 
         # Valid actions
         valid = []
-        for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle', 'spawn')):
+        for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
             valid = valid + [['move', loc]]
         for loc, bot in game['robots'].iteritems():
             if bot.player_id != self.player_id:
@@ -47,13 +49,17 @@ class Robot:
                     valid = valid + [['attack', loc]]
         valid = valid + [['guard'], ['suicide']]
 
-        '''if EXPERT:
+        if EXPERT:
+            # Avoid invalid moves
+            # actions = valid
+            '''
             # PREVIOUS MOVE Calculate negative self.utility of move. (suicide, invalid)
             print self.previous[1]
-            if self.previous[1][1] != self.location and self.previous != [] and 'guard' not in self.previous[0]:
-                print "Invalid Move"
-                rx(str(self.previous[0]) + str(self.previous[1]), -1)
-        '''
+            if self.previous[0] != -1:
+                if self.previous[1][1] != self.location and 'guard' not in self.previous[1]:
+                    print "Invalid Move"
+                    self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
+            '''
 
         # Select random action
         next_action = actions[random.randrange(0, len(actions))]
@@ -70,32 +76,38 @@ class Robot:
         self.previous = (state, next_action)
 
         if EXPERT:
+            # Account for standing on spawn on turn 10
+            if 'spawn' in rg.loc_types(self.location) and game.turn % 10 == 0:
+                self.rx(str(state) + str(next_action), -1)
+
             # NEXT MOVE Calculate negative self.utility of move. (suicide, invalid)
             if 'suicide' in next_action:
                 val = -1
                 # If beside enemies
-                if getBit(state, 0):
+                if ((state&(1<<0))!=0):
                     val = val + 1
-                if getBit(state, 1):
+                if ((state&(1<<1))!=0):
                     val = val + 1
-                if getBit(state, 2):
+                if ((state&(1<<2))!=0):
                     val = val + 1
-                if getBit(state, 3):
+                if ((state&(1<<3))!=0):
                     val = val + 1
-                rx(self, str(state) + str(next_action), val)
+                self.rx(str(state) + str(next_action), val)
             
             if next_action not in valid:
-                print "invalid"
                 self.rx(str(state) + str(next_action), -1)
+                next_action = ['guard']
             
 
 
         # Game Over, Calculate utilities.
-        if game.turn == rg.settings.max_turns - 1:
+        if game.turn == 1:
+            self.utility = self.rxLoad()
+        elif game.turn == rg.settings.max_turns - 1:
             self.rxEnd(game)
 
         # Execute action
-        print "Next: " + str(next_action)
+        # print "Next: " + str(next_action)
         # return ['guard']
         return next_action
 ### END MAIN
@@ -126,6 +138,23 @@ class Robot:
                 self.utility[state_action] = 100
             elif f < e:
                 self.utility[state_action] = -100
+
+        i = 0
+        for loc, bot in game['robots'].iteritems():
+            if i == 0:
+                # Save utility file
+                with open('utility.pickle', 'wb') as handle:
+                    pickle.dump(self.utility, handle)
+            i = i + 1
+
+
+    def rxLoad(self):
+        util = {}
+        if os.path.isfile('utility.pickle'):
+            with open('utility.pickle', 'rb') as handle:
+                util = pickle.load(handle)
+        return util
+
 
 
     def getState(self, game):
@@ -169,7 +198,7 @@ class Robot:
                     state = state + (1<<8)
                 elif 'spawn' in loc:
                     state = state + (1<<9)
-                elif 'obstacle' in loc and getBit(state, 11) == False:
+                elif 'obstacle' in loc and ((state&(1<<0))!=0):
                     state = state + (1<<10)
             elif loc[0] == self.location[0] + 1:
                 # Right
@@ -177,7 +206,7 @@ class Robot:
                     state = state + (1<<11)
                 elif 'spawn' in loc:
                     state = state + (1<<12)
-                elif 'obstacle' in loc and getBit(state, 11) == False:
+                elif 'obstacle' in loc and ((state&(1<<1))!=0):
                     state = state + (1<<13)
             elif loc[1] == self.location[1] - 1:
                 # Down
@@ -185,7 +214,7 @@ class Robot:
                     state = state + (1<<14)
                 elif 'spawn' in loc:
                     state = state + (1<<15)
-                elif 'obstacle' in loc and getBit(state, 11) == False:
+                elif 'obstacle' in loc and ((state&(1<<2))!=0):
                     state = state + (1<<16)
             elif loc[0] == self.location[0] - 1:
                 # Left
@@ -193,7 +222,7 @@ class Robot:
                     state = state + (1<<17)
                 elif 'spawn' in loc:
                     state = state + (1<<18)
-                elif 'obstacle' in loc and getBit(state, 11) == False:
+                elif 'obstacle' in loc and ((state&(1<<3))!=0):
                     state = state + (1<<19)
 
         if EXPERT:
@@ -201,13 +230,5 @@ class Robot:
             if self.hp < rg.settings.robot_hp/2:
                 state = state + (1<<20)
 
-            # Account for standing on spawn
-            if 'spawn' in rg.loc_types(self.location):
-                state = state + (1<<21)
-
 
         return state
-
-
-    def get_bit(byteval,idx):
-        return ((byteval&(1<<idx))!=0)
