@@ -8,7 +8,7 @@ import rg
 import defaultrobots
 from settings import settings, AttrDict
 
-
+utility = {}
 def init_settings(map_data):
     global settings
     settings.spawn_coords = map_data['spawn']
@@ -342,6 +342,7 @@ class Game:
         global settings
 
         actions = self.make_robots_act()
+
         self.remove_dead()
 
         if not self._unit_testing:

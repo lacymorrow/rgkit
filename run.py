@@ -43,6 +43,15 @@ def play(players, print_info=True, animate_render=True):
             print (' running turn %d ' % (g.turns + 1)).center(70, '-')
         g.run_turn()
 
+    #global utility
+    '''
+    for robot in self._robots:
+        user_robot = self._players[robot.player_id].get_robot()
+        print "asd" + str(user_robot.previous)
+        for y in user_robot.utility.keys():
+            if y in utility.keys():
+                utility[y] = (utility[y] + user_robot.utility[y])/2
+    '''
     if print_info:
         # only import render if we need to render the game;
         # this way, people who don't have tkinter can still

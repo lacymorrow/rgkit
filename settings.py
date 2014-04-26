@@ -1,7 +1,7 @@
 settings = {
     # game settings
-    'spawn_every': 100,
-    'spawn_per_player': 1,
+    'spawn_every': 10,
+    'spawn_per_player': 5,
     'board_size': 19,
     'robot_hp': 50,
     'attack_range': (8, 10),
