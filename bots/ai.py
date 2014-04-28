@@ -10,17 +10,20 @@ import rg, random, pickle, os.path
 #  REPRESENT DIFFERENT TYPES OF STATES ( {BesideLeftWall: moveright+2, EnemyLeft: attackleft + 4})
 
 # Activate EXPERT learning features
-EXPERT = False
-LEARNING_RATE = .5
+EXPERT = True
+LEARNING_RATE = .1
 
 # REWARD
-ATTACK_SUCCESS = True
+ATTACK_SUCCESS = False
 ATTACK_RECEIVED = False
 SPAWN = True
-REPEAT = True
-SUICIDE = True
-INVALID = True
+SPAWN_MOVE = True
+REPEAT = False
+SUICIDE = False
+INVALID = False
 PRIOR = True
+
+UTILITY_PATH = 'prior_only'
 
 
 
@@ -44,7 +47,7 @@ class Robot:
             ['attack', rg.toward(self.location, (self.location[0], self.location[1]+1))],
             ['attack', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
             ['guard'],
-            #['suicide']
+            ['suicide']
         ]
         if self.robot_id not in self.previous.keys():
             self.previous[self.robot_id] = (state, ['current', self.location], self.hp)
@@ -53,10 +56,10 @@ class Robot:
             self.utility = self.rxLoad()
         
         # Valid actions
-        valid = []
+        valid = valid_moves = []
         for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
-            valid = valid + [['move', loc]]
-        valid = valid + [['guard'], ['suicide']]
+            valid_moves = valid_moves + [['move', loc]]
+        valid = valid_moves + [['guard'], ['suicide']]
         for loc, bot in game['robots'].iteritems():
             if bot.player_id != self.player_id:
                 if rg.wdist(loc, self.location) <= 1:
@@ -75,7 +78,9 @@ class Robot:
                 self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), -10)
             # Account for standing on spawn on turn 10
             if SPAWN and 'spawn' in rg.loc_types(self.location):
-                if (game.turn + 1) % 10 == 0 or 'guard' in self.previous[self.robot_id][1]:
+                if (game.turn) % 10 == 0 or 'guard' in self.previous[self.robot_id][1]:
+                    print "I'm fucked"
+                    # MOVE DUMMY
                     # On a spawn at turn 10n? You're fucked. On a spawn and guarding? You're dumb.
                     self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), -10)
             # Dont make the same mistake move twice
@@ -109,7 +114,9 @@ class Robot:
                 if ((state&(1<<3))!=0):
                     val = val + 20
                 self.utility = self.rx(str(state) + str(next_action), val)
-            
+            if SPAWN_MOVE and 'spawn' in rg.loc_types(self.location) and (game.turn) % 10 == 0:
+                # GET OUT OF THE WAY!!
+                next_action = valid_moves[random.randrange(0, len(valid_moves))]
             # Don't make invalid moves
             if INVALID and next_action not in valid:
                 self.utility = self.rx(str(state) + str(next_action), -10)
@@ -128,9 +135,8 @@ class Robot:
             self.rxEnd(game)
 
         # Execute action
-        #print "P" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
+        print "P" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
         #self.stats(state, next_action)
-        # return ['guard']
         return next_action
 ### END MAIN
     def stats(self, state, next_action):
@@ -147,13 +153,13 @@ class Robot:
             print "Enemy bottom"
         if ((state&(1<<3))!=0):
             print "Enemy left"
-        if ((state&(1<<0))!=0):
+        if ((state&(1<<4))!=0):
             print "Friend top"
-        if ((state&(1<<1))!=0):
+        if ((state&(1<<5))!=0):
             print "Friend right"
-        if ((state&(1<<2))!=0):
+        if ((state&(1<<6))!=0):
             print "Friend bottom"
-        if ((state&(1<<3))!=0):
+        if ((state&(1<<7))!=0):
             print "Friend left"
         print "Next: " + str(next_action)
 
@@ -186,13 +192,13 @@ class Robot:
             elif f < e:
                 self.utility[state_action] = -1000
         # Save utility file
-        with open('utility.pickle', 'wb') as handle:
+        with open(UTILITY_PATH + '.pickle', 'wb') as handle:
             pickle.dump(self.utility, handle)
 
     def rxLoad(self):
         util = {}
-        if os.path.isfile('utility.pickle'):
-            with open('utility.pickle', 'rb') as handle:
+        if os.path.isfile(UTILITY_PATH + '.pickle'):
+            with open(UTILITY_PATH + '.pickle', 'rb') as handle:
                 util = pickle.load(handle)
         return util
 
