@@ -1,4 +1,6 @@
 import rg, random, pickle, os.path
+import pdb
+pdb.set_trace()
 # 
 ### TODO
 # re-enable multiprocessing
