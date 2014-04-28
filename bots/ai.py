@@ -1,6 +1,4 @@
 import rg, random, pickle, os.path
-import pdb
-pdb.set_trace()
 # 
 ### TODO
 # re-enable multiprocessing
@@ -56,6 +54,7 @@ class Robot:
             # Dont make the same mistake move twice
             if self.previous[0] != -1:
                 if 'move' in self.previous[1] and self.previous[1][1] != self.location:
+                    print "CHOSE " + str(self.previous) + "  *  " + str(valid)
                     self.utility = self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
 
         # Select random action
@@ -85,10 +84,10 @@ class Robot:
                     val = val + 1
                 self.utility = self.rx(str(state) + str(next_action), val)
             # Don't make invalid moves
-            if next_action not in valid:
-                print "CHOSE " + str(next_action) + "  *  " + str(valid)
-                self.utility = self.rx(str(state) + str(next_action), -1)
-                next_action = ['guard']
+            #if next_action not in valid:
+            #    print "CHOSE " + str(next_action) + "  *  " + str(valid)
+            #    self.utility = self.rx(str(state) + str(next_action), -1)
+            #    next_action = ['guard']
             
         # DONE CHOOSING ACTION. Set previous
         self.previous = (state, next_action)
