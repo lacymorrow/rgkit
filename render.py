@@ -85,7 +85,7 @@ class RobotSprite:
         if self.action == 'move':
             # if normal move, start at bot location and move to next location
             # (note that first half of all move animations is the same)
-            if delta < 0.5 or self.location_next == self.target:
+            if (delta < 0.5 or self.location_next == self.target):
                 x, y = self.location
                 tx, ty = self.target
             # if we're halfway through this animation AND the movement didn't succeed, reverse it (bounce back)

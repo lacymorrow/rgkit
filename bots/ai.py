@@ -31,9 +31,11 @@ class Robot:
             ['guard'],
             ['suicide']
         ]
+        
         # First turn, load utils
         if game.turn == 1:
             self.utility = self.rxLoad()
+        
         # Valid actions
         valid = []
         for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
@@ -44,6 +46,7 @@ class Robot:
                     valid = valid + [['attack', loc]]
         valid = valid + [['guard'], ['suicide']]
 
+        # EXPERT LEARNING
         if EXPERT:
             # Avoid invalid moves ***
             # actions = valid
@@ -68,7 +71,7 @@ class Robot:
             elif (str(state) + str(action)) in self.utility.keys() and self.utility[str(state) + str(action)] > 0:
                 next_action = action
 
-        # Learn quickly
+        # EXPERT LEARNING
         if EXPERT:
             # NEXT MOVE Calculate negative self.utility of move. (suicide, invalid)
             if 'suicide' in next_action:
@@ -83,12 +86,12 @@ class Robot:
                 if ((state&(1<<3))!=0):
                     val = val + 1
                 self.utility = self.rx(str(state) + str(next_action), val)
-            # Don't make invalid moves
-            #if next_action not in valid:
-            #    print "CHOSE " + str(next_action) + "  *  " + str(valid)
-            #    self.utility = self.rx(str(state) + str(next_action), -1)
-            #    next_action = ['guard']
             
+            # Don't make invalid moves
+            if next_action not in valid:
+                self.utility = self.rx(str(state) + str(next_action), -1)
+                next_action = ['guard']
+
         # DONE CHOOSING ACTION. Set previous
         self.previous = (state, next_action)
 
@@ -98,7 +101,7 @@ class Robot:
 
         # Execute action
         print "P" + str(self.player_id) + " Robot @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
-        #self.stats(state, next_action)
+        # self.stats(state, next_action)
         # return ['guard']
         return next_action
 ### END MAIN

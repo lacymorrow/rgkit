@@ -11,7 +11,7 @@ settings = {
 
     # rendering
     'FPS': 60,  # frames per second
-    'turn_interval': 300,  # milliseconds per turn
+    'turn_interval': 100,  # milliseconds per turn
     'colors': [(0.9, 0, 0.2), (0, 0.9, 0.2)],
     'obstacle_color': (.2, .2, .2),
     'normal_color': (.9, .9, .9),
