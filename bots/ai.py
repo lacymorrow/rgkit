@@ -2,16 +2,16 @@ import rg, random, pickle, os.path
 # 
 ### TODO
 # re-enable multiprocessing
-# account for spawn on turn 10
 # Punish for attacking nothing or attacking friend
 # Should we normalize the RX functions? IE self.utility[state_action] = (self.utility[state_action] - 100)/2
-# 
+#  TAKE ENTIRE BOARD INTO STATE SPACE
+#  REPRESENT DIFFERENT TYPES OF STATES ( {BesideLeftWall: moveright+2, EnemyLeft: attackleft + 4})
 
 # Activate EXPERT learning features
 EXPERT = True
 
 class Robot:
-    previous = (-1, [])
+    previous = {-1: (-1, [])}
     utility = {}
     def act(self, game):
         # GLOBALS
@@ -31,7 +31,8 @@ class Robot:
             ['guard'],
             ['suicide']
         ]
-        
+        if self.robot_id not in self.previous.keys():
+            self.previous[self.robot_id] = (state, ['current', self.location])
         # First turn, load utils
         if game.turn == 1:
             self.utility = self.rxLoad()
@@ -53,12 +54,11 @@ class Robot:
             # Account for standing on spawn on turn 10
             if (game.turn + 1) % 10 == 0 and 'spawn' in rg.loc_types(self.location):
                 # On a spawn at turn 10n? You're fucked.
-                self.utility = self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
+                self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), -1)
             # Dont make the same mistake move twice
-            if self.previous[0] != -1:
-                if 'move' in self.previous[1] and self.previous[1][1] != self.location:
-                    print "CHOSE " + str(self.previous) + "  *  " + str(valid)
-                    self.utility = self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
+            if self.previous[self.robot_id][0] != -1:
+                if 'move' in self.previous[self.robot_id][1] and self.previous[self.robot_id][1][1] != self.location:
+                    self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), -1)
 
         # Select random action
         next_action = actions[random.randrange(0, len(actions))]
@@ -93,22 +93,22 @@ class Robot:
                 next_action = ['guard']
 
         # DONE CHOOSING ACTION. Set previous
-        self.previous = (state, next_action)
+        self.previous[self.robot_id] = (state, next_action)
 
         # Game Over, Calculate utilities.
         if game.turn == rg.settings.max_turns - 1:
             self.rxEnd(game)
 
         # Execute action
-        print "P" + str(self.player_id) + " Robot @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
-        # self.stats(state, next_action)
+        #print "P" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
+        #self.stats(state, next_action)
         # return ['guard']
         return next_action
 ### END MAIN
     def stats(self, state, next_action):
         ### DEBUG *** PRINT ###
-        print "*************\nP" + str(self.player_id) + " Robot @ " + str(self.location) + " HP: " + str(self.hp)
-        print "Previous:  " + str(self.previous)
+        print "*************\nP" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp)
+        print "Previous:  " + str(self.previous[self.robot_id])
         print "Utilities: " + str(len(self.utility))
         if ((state&(1<<0))!=0):
             print "Enemy top"
@@ -139,7 +139,7 @@ class Robot:
     def rxEnd(self, game):
         # Simple. Most bots wins.
         e = f = 0
-        state_action = str(self.previous[0]) + str(self.previous[1])
+        state_action = str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1])
         for loc, bot in game.get('robots').items():
             # Enemy
             if bot.player_id != self.player_id: 

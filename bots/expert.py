@@ -1,4 +1,4 @@
-import rg
+import rg, random
 previous = (0,0)
 class Robot:
     def act(self, game):
@@ -25,16 +25,30 @@ class Robot:
         print "Possible: " + str(valid)
         print "Previous: " + str(previous)
 
-        # Expert: Enumerate valid actions
-        valid_moves = rg.locs_around(self.location, filter_out=('invalid', 'obstacle', 'spawn'))
-        valid_attack = []
+        actions = [
+            ['move', rg.toward(self.location, (self.location[0], self.location[1]+1))],
+            ['move', rg.toward(self.location, (self.location[0]+1, self.location[1]))],
+            ['move', rg.toward(self.location, (self.location[0], self.location[1]-1))],
+            ['move', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
+            ['attack', rg.toward(self.location, (self.location[0], self.location[1]+1))],
+            ['attack', rg.toward(self.location, (self.location[0]+1, self.location[1]))],
+            ['attack', rg.toward(self.location, (self.location[0], self.location[1]-1))],
+            ['attack', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
+            ['guard'],
+            ['suicide']
+        ]
+        
+        # Valid actions
+        valid = []
+        for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle', 'spawn')):
+            valid = valid + [['move', loc]]
         for loc, bot in game['robots'].iteritems():
             if bot.player_id != self.player_id:
                 if rg.wdist(loc, self.location) <= 1:
-                    valid_attack = valid_attack + loc
-        valid = valid_attack + valid_moves + ['guard', 'suicide']
+                    valid = valid + [['attack', loc]]
+        valid = valid + [['guard'], ['suicide']]
 
-
+        next_action = valid[random.randrange(0, len(valid))]
         # if there are 3+ enemies around, suicide!
         aroundE = 0
         for loc, bot in game['robots'].iteritems():

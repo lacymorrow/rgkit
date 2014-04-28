@@ -43,12 +43,13 @@ class Player:
         return self._robot
 
 class InternalRobot:
-    def __init__(self, location, hp, player_id, robot_id, field):
+    def __init__(self, location, hp, player_id, robot_id, field, instance_id=None):
         self.location = location
         self.hp = hp
         self.player_id = player_id
         self.robot_id = robot_id
         self.field = field
+        self.instance_id = instance_id
 
     def __repr__(self):
         return '<%s: player: %d, hp: %d>' % (
@@ -279,12 +280,11 @@ class Game:
     def robot_at_loc(self, loc):
         return self._field[loc]
 
-    def spawn_robot(self, player_id, loc):
+    def spawn_robot(self, player_id, loc, instance_id=None):
         if self.robot_at_loc(loc) is not None:
             return False
-
         robot_id = self.get_robot_id()
-        robot = InternalRobot(loc, settings.robot_hp, player_id, robot_id, self._field)
+        robot = InternalRobot(loc, settings.robot_hp, player_id, robot_id, self._field, random.randrange(1,10+1))
         self._robots.append(robot)
         self._field[loc] = robot
         if self._record:
