@@ -1,10 +1,7 @@
 import rg, random
-previous = (0,0)
 class Robot:
     def act(self, game):
-        global previous
         ### CALCUlATE HELPER VARS ###
-        # find closest enemy
         # find closest enemy
         CLOSESTE = (1000, 1000)
         for loc, bot in game.get('robots').items():
@@ -17,27 +14,6 @@ class Robot:
                 if rg.wdist(loc, self.location) <= rg.wdist(CLOSESTF, self.location):
                     CLOSESTF = loc
 
-        valid = rg.locs_around(self.location, filter_out=('invalid', 'obstacle', 'spawn'))
-        
-        ### DEBUG *** PRINT ###
-        print "ClosestE: " + str(CLOSESTE)
-        print "ClosestF: " + str(CLOSESTF)
-        print "Possible: " + str(valid)
-        print "Previous: " + str(previous)
-
-        actions = [
-            ['move', rg.toward(self.location, (self.location[0], self.location[1]+1))],
-            ['move', rg.toward(self.location, (self.location[0]+1, self.location[1]))],
-            ['move', rg.toward(self.location, (self.location[0], self.location[1]-1))],
-            ['move', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
-            ['attack', rg.toward(self.location, (self.location[0], self.location[1]+1))],
-            ['attack', rg.toward(self.location, (self.location[0]+1, self.location[1]))],
-            ['attack', rg.toward(self.location, (self.location[0], self.location[1]-1))],
-            ['attack', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
-            ['guard'],
-            ['suicide']
-        ]
-        
         # Valid actions
         valid = []
         for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle', 'spawn')):
@@ -48,7 +24,17 @@ class Robot:
                     valid = valid + [['attack', loc]]
         valid = valid + [['guard'], ['suicide']]
 
+        
+        ### DEBUG *** PRINT ###
+        print "P" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp)
+        print "ClosestE: " + str(CLOSESTE)
+        print "ClosestF: " + str(CLOSESTF)
+        print "Possible: " + str(valid)
+        
+
+        # Choose a random action
         next_action = valid[random.randrange(0, len(valid))]
+
         # if there are 3+ enemies around, suicide!
         aroundE = 0
         for loc, bot in game['robots'].iteritems():
@@ -57,6 +43,7 @@ class Robot:
 					aroundE += 1
         if aroundE >= 3:
         	return ['suicide']
+
         # 3+ friends around, guard
         aroundF = 0
         for loc, bot in game['robots'].iteritems():
@@ -66,44 +53,19 @@ class Robot:
         if aroundF >= 3:
             return ['guard']
         	
-        
         # if we're in the center, stay put
         if self.location == rg.CENTER_POINT:
             return ['guard']
-        
         
         # if there are enemies around, attack them
         for loc, bot in game['robots'].iteritems():
             if bot.player_id != self.player_id:
                 if rg.dist(loc, self.location) <= 1:
                     return ['attack', loc]
-        '''
+                    
         # if enemy closer than center, move towards
-        if rg.wdist(closestE, self.location) < rg.wdist(self.location, rg.CENTER_POINT):
-            return ['move', rg.toward(self.location, closestE)]
-        
-        # if obstacle in the way, guard
-        if rg.toward(self.location, rg.CENTER_POINT) not in valid:
-            print "Guarding"
-            return ['guard']
-
-        # move toward the enemy
-        if rg.toward(self.location, CLOSESTE) in valid:
-            previous = self.location
+        if rg.wdist(CLOSESTE, self.location) < rg.wdist(self.location, rg.CENTER_POINT):
             return ['move', rg.toward(self.location, CLOSESTE)]
-
-        for i in valid:
-            print "prev: " + str(previous)
-            print "i: " + str(i)
-            if i != previous:
-                previous = self.location
-                return ['move', rg.toward(self.location, i)]
-        '''
-        for i in valid_moves:
-            if i != previous:
-                previous = self.location
-                return ['move', rg.toward(self.location, i)]
-        return ['move', rg.toward(self.location, previous)]
 
         # move toward the center
         return ['move', rg.toward(self.location, rg.CENTER_POINT)]
