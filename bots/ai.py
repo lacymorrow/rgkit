@@ -1,10 +1,11 @@
 import rg, random, pickle, os.path
 # 
 ### TODO
+# re-enable multiprocessing
 # account for spawn on turn 10
 # Punish for attacking nothing or attacking friend
 # Should we normalize the RX functions? IE self.utility[state_action] = (self.utility[state_action] - 100)/2
-#
+# 
 
 # Activate EXPERT learning features
 EXPERT = True
@@ -15,14 +16,6 @@ class Robot:
     def act(self, game):
         # GLOBALS
         global EXPERT
-
-        '''
-        ### DEBUG *** PRINT ###
-        print "\n ***** Robot #" + str(self.player_id) + " *****"
-        print "Previous:  " + str(self.previous)
-        print "Current:   " + str(self.location)
-        print "Utilities: " + str(len(self.utility))
-        '''
 
         # LOCALS
         state = self.getState(game)
@@ -36,9 +29,11 @@ class Robot:
             ['attack', rg.toward(self.location, (self.location[0], self.location[1]-1))],
             ['attack', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
             ['guard'],
-            #['suicide']
+            ['suicide']
         ]
-
+        # First turn, load utils
+        if game.turn == 1:
+            self.utility = self.rxLoad()
         # Valid actions
         valid = []
         for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
@@ -50,16 +45,16 @@ class Robot:
         valid = valid + [['guard'], ['suicide']]
 
         if EXPERT:
-            # Avoid invalid moves
+            # Avoid invalid moves ***
             # actions = valid
-            '''
-            # PREVIOUS MOVE Calculate negative self.utility of move. (suicide, invalid)
-            print self.previous[1]
+            # Account for standing on spawn on turn 10
+            if (game.turn + 1) % 10 == 0 and 'spawn' in rg.loc_types(self.location):
+                # On a spawn at turn 10n? You're fucked.
+                self.utility = self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
+            # Dont make the same mistake move twice
             if self.previous[0] != -1:
-                if self.previous[1][1] != self.location and 'guard' not in self.previous[1]:
-                    print "Invalid Move"
-                    self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
-            '''
+                if 'move' in self.previous[1] and self.previous[1][1] != self.location:
+                    self.utility = self.rx(str(self.previous[0]) + str(self.previous[1]), -1)
 
         # Select random action
         next_action = actions[random.randrange(0, len(actions))]
@@ -72,14 +67,8 @@ class Robot:
             elif (str(state) + str(action)) in self.utility.keys() and self.utility[str(state) + str(action)] > 0:
                 next_action = action
 
-        # DONE CHOOSING ACTION. Set previous
-        self.previous = (state, next_action)
-
+        # Learn quickly
         if EXPERT:
-            # Account for standing on spawn on turn 10
-            if 'spawn' in rg.loc_types(self.location) and game.turn % 10 == 0:
-                self.rx(str(state) + str(next_action), -1)
-
             # NEXT MOVE Calculate negative self.utility of move. (suicide, invalid)
             if 'suicide' in next_action:
                 val = -1
@@ -92,31 +81,56 @@ class Robot:
                     val = val + 1
                 if ((state&(1<<3))!=0):
                     val = val + 1
-                self.rx(str(state) + str(next_action), val)
-            
+                self.utility = self.rx(str(state) + str(next_action), val)
+            # Don't make invalid moves
             if next_action not in valid:
-                self.rx(str(state) + str(next_action), -1)
+                print "CHOSE " + str(next_action) + "  *  " + str(valid)
+                self.utility = self.rx(str(state) + str(next_action), -1)
                 next_action = ['guard']
             
-
+        # DONE CHOOSING ACTION. Set previous
+        self.previous = (state, next_action)
 
         # Game Over, Calculate utilities.
-        if game.turn == 1:
-            self.utility = self.rxLoad()
-        elif game.turn == rg.settings.max_turns - 1:
+        if game.turn == rg.settings.max_turns - 1:
             self.rxEnd(game)
 
         # Execute action
-        # print "Next: " + str(next_action)
+        print "P" + str(self.player_id) + " Robot @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility)) + " Next: " + str(next_action)
+        #self.stats(state, next_action)
         # return ['guard']
         return next_action
 ### END MAIN
+    def stats(self, state, next_action):
+        ### DEBUG *** PRINT ###
+        print "*************\nP" + str(self.player_id) + " Robot @ " + str(self.location) + " HP: " + str(self.hp)
+        print "Previous:  " + str(self.previous)
+        print "Utilities: " + str(len(self.utility))
+        if ((state&(1<<0))!=0):
+            print "Enemy top"
+        if ((state&(1<<1))!=0):
+            print "Enemy right"
+        if ((state&(1<<2))!=0):
+            print "Enemy bottom"
+        if ((state&(1<<3))!=0):
+            print "Enemy left"
+        if ((state&(1<<0))!=0):
+            print "Friend top"
+        if ((state&(1<<1))!=0):
+            print "Friend right"
+        if ((state&(1<<2))!=0):
+            print "Friend bottom"
+        if ((state&(1<<3))!=0):
+            print "Friend left"
+        print "Next: " + str(next_action)
 
+        
     def rx(self, state_action, value):
         if state_action in self.utility.keys():
             self.utility[state_action] = self.utility[state_action] + value
         else:
             self.utility[state_action] = value
+        return self.utility
 
     def rxEnd(self, game):
         # Simple. Most bots wins.
@@ -138,15 +152,9 @@ class Robot:
                 self.utility[state_action] = 100
             elif f < e:
                 self.utility[state_action] = -100
-
-        i = 0
-        for loc, bot in game['robots'].iteritems():
-            if i == 0:
-                # Save utility file
-                with open('utility.pickle', 'wb') as handle:
-                    pickle.dump(self.utility, handle)
-            i = i + 1
-
+        # Save utility file
+        with open('utility.pickle', 'wb') as handle:
+            pickle.dump(self.utility, handle)
 
     def rxLoad(self):
         util = {}
@@ -163,36 +171,36 @@ class Robot:
         for loc, bot in game.get('robots').items():
             # Enemy
             if bot.player_id != self.player_id: 
-                if loc[1] == self.location[1] + 1:
+                if loc[1] == self.location[1] - 1 and loc[0] == self.location[0]:
                     # Up
                     state = state + (1<<0)
-                elif loc[0] == self.location[0] + 1:
+                elif loc[0] == self.location[0] + 1 and loc[1] == self.location[1]:
                     # Right
                     state = state + (1<<1)
-                elif loc[1] == self.location[1] - 1:
+                elif loc[1] == self.location[1] + 1 and loc[0] == self.location[0]:
                     # Down
                     state = state + (1<<2)
-                elif loc[0] == self.location[0] - 1:
+                elif loc[0] == self.location[0] - 1 and loc[1] == self.location[1]:
                     # Left
                     state = state + (1<<3)
             #Friend
             else:
-                if loc[1] == self.location[1] + 1:
+                if loc[1] == self.location[1] - 1 and loc[0] == self.location[0]:
                     # Up
                     state = state + (1<<4)
-                elif loc[0] == self.location[0] + 1:
+                elif loc[0] == self.location[0] + 1 and loc[1] == self.location[1]:
                     # Right
                     state = state + (1<<5)
-                elif loc[1] == self.location[1] - 1:
+                elif loc[1] == self.location[1] + 1 and loc[0] == self.location[0]:
                     # Down
                     state = state + (1<<6)
-                elif loc[0] == self.location[0] - 1:
+                elif loc[0] == self.location[0] - 1 and loc[1] == self.location[1]:
                     # Left
                     state = state + (1<<7)
 
         # Surrounding types
         for loc in rg.locs_around(self.location):
-            if loc[1] == self.location[1] + 1:
+            if loc[1] == self.location[1] - 1:
                 # Up
                 if 'invalid' in loc:
                     state = state + (1<<8)
@@ -208,7 +216,7 @@ class Robot:
                     state = state + (1<<12)
                 elif 'obstacle' in loc and ((state&(1<<1))!=0):
                     state = state + (1<<13)
-            elif loc[1] == self.location[1] - 1:
+            elif loc[1] == self.location[1] + 1:
                 # Down
                 if 'invalid' in loc:
                     state = state + (1<<14)
@@ -229,6 +237,7 @@ class Robot:
             # Account for HP below 50%
             if self.hp < rg.settings.robot_hp/2:
                 state = state + (1<<20)
+
 
 
         return state
