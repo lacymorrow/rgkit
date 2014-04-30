@@ -5,7 +5,7 @@ import ast
 import argparse
 import itertools
 
-_is_multiprocessing_supported = False
+_is_multiprocessing_supported = True
 try:
     from multiprocessing import Pool
 except ImportError:
