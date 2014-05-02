@@ -10,7 +10,7 @@ class Robot:
                     CLOSESTE = loc
         CLOSESTF = (1000, 1000)
         for loc, bot in game.get('robots').items():
-            if bot.player_id != self.player_id:
+            if bot.player_id == self.player_id:
                 if rg.wdist(loc, self.location) <= rg.wdist(CLOSESTF, self.location):
                     CLOSESTF = loc
 

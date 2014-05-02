@@ -6,12 +6,13 @@ import rg, random, pickle, os.path
 # Create getbit function
 # Punish for attacking nothing or attacking friend
 # Should we normalize the RX functions? IE self.utility[state_action] = (self.utility[state_action] - 100)/2
-#  TAKE ENTIRE BOARD INTO STATE SPACE
 #  REPRESENT DIFFERENT TYPES OF STATES ( {BesideLeftWall: moveright+2, EnemyLeft: attackleft + 4})
+# Q Learning Agent
 
 # Activate EXPERT learning features
-EXPERT = True
+EXPERT = False
 LEARNING_RATE = .1
+THRESHOLD = 10  # active learner
 
 # REWARD
 ATTACK_SUCCESS = False
@@ -23,7 +24,7 @@ SUICIDE = False
 INVALID = False
 PRIOR = True
 
-UTILITY_PATH = 'prior_only'
+UTILITY_PATH = 'learn'
 
 
 
@@ -31,6 +32,8 @@ UTILITY_PATH = 'prior_only'
 class Robot:
     previous = {-1: [-1, [], -1]}
     utility = {}
+    saved = False
+    loaded = False
     def act(self, game):
         # GLOBALS
         global EXPERT
@@ -52,27 +55,30 @@ class Robot:
         if self.robot_id not in self.previous.keys():
             self.previous[self.robot_id] = (state, ['current', self.location], self.hp)
         # First turn, load utils
-        if game.turn == 1:
+        if self.loaded == False and game.turn == 1:
+            self.saved = False
+            self.loaded = True
             self.utility = self.rxLoad()
         
-        # Valid actions
-        valid = valid_moves = []
-        for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
-            valid_moves = valid_moves + [['move', loc]]
-        valid = valid_moves + [['guard'], ['suicide']]
-        for loc, bot in game['robots'].iteritems():
-            if bot.player_id != self.player_id:
-                if rg.wdist(loc, self.location) <= 1:
-                    valid = valid + [['attack', loc]]
+            # Valid actions
+        if EXPERT:
+            valid = valid_moves = []
+            for loc in rg.locs_around(self.location, filter_out=('invalid', 'obstacle')):
+                valid_moves = valid_moves + [['move', loc]]
+            valid = valid_moves + [['guard'], ['suicide']]
+            for loc, bot in game['robots'].iteritems():
+                if bot.player_id != self.player_id:
+                    if rg.wdist(loc, self.location) <= 1:
+                        valid = valid + [['attack', loc]]
 
-                # EXPERT LEARNING. Attack hit!
-                if EXPERT and ATTACK_SUCCESS and 'attack' in self.previous[self.robot_id][1][0] and loc == self.previous[self.robot_id][1][1]:
-                    self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), +10)
+                    # EXPERT LEARNING. Attack hit!
+                    if ATTACK_SUCCESS and 'attack' in self.previous[self.robot_id][1][0] and loc == self.previous[self.robot_id][1][1]:
+                        self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), +10)
+        # Avoid invalid moves ***
+        # actions = valid
 
         # EXPERT LEARNING
         if EXPERT:
-            # Avoid invalid moves ***
-            # actions = valid
             # Lost Health!
             if ATTACK_RECEIVED and self.hp < self.previous[self.robot_id][2] and 'guard' not in self.previous[self.robot_id][1]:
                 self.utility = self.rx(str(self.previous[self.robot_id][0]) + str(self.previous[self.robot_id][1]), -10)
@@ -94,9 +100,9 @@ class Robot:
         # Select highest self.utility action
         for action in actions:
             if (str(state) + str(action)) in self.utility.keys() and (str(state) + str(next_action)) in self.utility.keys():
-                if self.utility[str(state) + str(action)] > self.utility[str(state) + str(next_action)]:
+                if self.utility[str(state) + str(next_action)][1] < THRESHOLD or self.utility[str(state) + str(action)][0] > self.utility[str(state) + str(next_action)][0]:
                     next_action = action
-            elif (str(state) + str(action)) in self.utility.keys() and self.utility[str(state) + str(action)] > 0:
+            elif (str(state) + str(action)) in self.utility.keys() and (self.utility[str(state) + str(action)] > 0 or self.utility[str(state) + str(next_action)][1] < THRESHOLD):
                 next_action = action
 
         # EXPERT LEARNING
@@ -141,7 +147,7 @@ class Robot:
 ### END MAIN
     def stats(self, state, next_action):
         ### DEBUG *** PRINT ###
-        print "*************\nP" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " HP: " + str(self.hp) + " Utils: " + str(len(self.utility))
+        print "*************\nP" + str(self.player_id) + " Robot #" + str(self.robot_id) + " @ " + str(self.location) + " Visited: " + str(self.utility[str(state) + str(next_action)][1]) + " HP: " + str(self.hp) + " U: " + str(len(self.utility))
         print "Previous:  " + str(self.previous[self.robot_id])
         if self.hp < self.previous[self.robot_id][2]:
             print "Took damage!"
@@ -166,9 +172,10 @@ class Robot:
         
     def rx(self, state_action, value):
         if state_action in self.utility.keys():
-            self.utility[state_action] = self.utility[state_action] + value
+            print "Visited: " + str(self.utility[state_action][1] + 1)
+            self.utility[state_action] = ((self.utility[state_action][0] + value), (self.utility[state_action][1] + 1))
         else:
-            self.utility[state_action] = value
+            self.utility[state_action] = (value, 1)
         return self.utility
 
     def rxEnd(self, game):
@@ -183,23 +190,31 @@ class Robot:
                 f = f + 1
         if state_action in self.utility:
             if f > e:
-                self.utility[state_action] = self.utility[state_action] + 1000
+                self.utility[state_action] = ((self.utility[state_action][0] + 1000), (self.utility[state_action][1] + 1))
             elif f < e:
-                self.utility[state_action] = self.utility[state_action] - 1000
+                self.utility[state_action] = ((self.utility[state_action][0] - 1000), (self.utility[state_action][1] + 1))
         else:
             if f > e:
-                self.utility[state_action] = 1000
+                self.utility[state_action] = (1000, 1)
             elif f < e:
-                self.utility[state_action] = -1000
+                self.utility[state_action] = (-1000, 1)
         # Save utility file
-        with open(UTILITY_PATH + '.pickle', 'wb') as handle:
-            pickle.dump(self.utility, handle)
+        if self.saved == False:
+            f = open(UTILITY_PATH + '.pickle','wb')
+            pickle.dump(self.utility, f)
+            f.close()
+            #with open(UTILITY_PATH + '.pickle', 'wb') as handle:
+            #    pickle.dump(self.utility, handle)
+            self.saved = True
+            self.loaded = False
 
     def rxLoad(self):
         util = {}
         if os.path.isfile(UTILITY_PATH + '.pickle'):
-            with open(UTILITY_PATH + '.pickle', 'rb') as handle:
-                util = pickle.load(handle)
+            f = open(UTILITY_PATH + '.pickle', 'rb')
+            util = pickle.load(f)
+            #with open(UTILITY_PATH + '.pickle', 'rb') as handle:
+            #    util = pickle.load(handle)
         return util
 
 
