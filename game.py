@@ -43,13 +43,14 @@ class Player:
         return self._robot
 
 class InternalRobot:
-    def __init__(self, location, hp, player_id, robot_id, field, instance_id=None):
+    def __init__(self, location, hp, player_id, robot_id, field, instance_id=None, util={}):
         self.location = location
         self.hp = hp
         self.player_id = player_id
         self.robot_id = robot_id
         self.field = field
         self.instance_id = instance_id
+        self.utility = util
 
     def __repr__(self):
         return '<%s: player: %d, hp: %d>' % (
@@ -178,13 +179,14 @@ class Field:
             print point[1], point[0]
 
 class Game:
-    def __init__(self, player1, player2, record_turns=False, unit_testing=False):
+    def __init__(self, player1, player2, record_turns=False, unit_testing=False, util={}):
         self._players = (player1, player2)
         self.turns = 0
         self._robots = []
         self._field = Field(settings.board_size)
         self._unit_testing = unit_testing
         self._id_inc = 0
+        self.util = util
 
         self._record = record_turns
         if self._record:
@@ -238,6 +240,7 @@ class Game:
 
         for robot in self._robots:
             user_robot = self._players[robot.player_id].get_robot()
+            user_robot.utility = self.util
             for prop in settings.exposed_properties + settings.player_only_properties:
                 setattr(user_robot, prop, getattr(robot, prop))
             try:
@@ -248,6 +251,7 @@ class Game:
                 traceback.print_exc(file=sys.stdout)
                 next_action = ['guard']
             actions[robot] = next_action
+            self.util = user_robot.utility
 
         commands = list(settings.valid_commands)
         commands.remove('guard')
@@ -284,7 +288,7 @@ class Game:
         if self.robot_at_loc(loc) is not None:
             return False
         robot_id = self.get_robot_id()
-        robot = InternalRobot(loc, settings.robot_hp, player_id, robot_id, self._field, random.randrange(1,10+1))
+        robot = InternalRobot(loc, settings.robot_hp, player_id, robot_id, self._field, random.randrange(1,10+1), self.util)
         self._robots.append(robot)
         self._field[loc] = robot
         if self._record:

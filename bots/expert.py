@@ -68,4 +68,8 @@ class Robot:
             return ['move', rg.toward(self.location, CLOSESTE)]
 
         # move toward the center
-        return ['move', rg.toward(self.location, rg.CENTER_POINT)]
+        if ['move', rg.toward(self.location, rg.CENTER_POINT)] in valid:
+            return ['move', rg.toward(self.location, rg.CENTER_POINT)]
+
+        # Guard
+        return ['guard']

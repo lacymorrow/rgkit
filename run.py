@@ -4,8 +4,9 @@ import os
 import ast
 import argparse
 import itertools
+import pickle
 
-_is_multiprocessing_supported = True
+_is_multiprocessing_supported = False
 try:
     from multiprocessing import Pool
 except ImportError:
@@ -14,7 +15,7 @@ except ImportError:
 ###
 import game
 from settings import settings
-
+util = {}
 parser = argparse.ArgumentParser(description="Robot game execution script.")
 parser.add_argument("usercode1",
                     help="File containing first robot class definition.")
@@ -37,21 +38,23 @@ def make_player(fname):
         return game.Player(player_code.read())
 
 def play(players, print_info=True, animate_render=True):
-    g = game.Game(*players, record_turns=True)
+    global util
+    util = {}
+    if os.path.isfile('util.pickle'):
+        f = open('util.pickle', 'rb')
+        util = pickle.load(f)
+        f.close()
+    g = game.Game(*players, record_turns=True, util=util)
     for i in xrange(settings.max_turns):
         if print_info:
             print (' running turn %d ' % (g.turns + 1)).center(70, '-')
         g.run_turn()
 
     #global utility
-    '''
-    for robot in self._robots:
-        user_robot = self._players[robot.player_id].get_robot()
-        print "asd" + str(user_robot.previous)
-        for y in user_robot.utility.keys():
-            if y in utility.keys():
-                utility[y] = (utility[y] + user_robot.utility[y])/2
-    '''
+    util = g.util
+    f = open('util.pickle','wb')
+    pickle.dump(util, f)
+    f.close()
     if print_info:
         # only import render if we need to render the game;
         # this way, people who don't have tkinter can still
@@ -71,6 +74,7 @@ def test_runs_sequentially(args):
             play(players, not args.headless, args.no_animate)
         )
         print scores[-1]
+        print len(util)
     return scores
 
 def task(data):
