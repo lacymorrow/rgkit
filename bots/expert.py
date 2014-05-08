@@ -52,11 +52,7 @@ class Robot:
 					aroundF += 1
         if aroundF >= 3:
             return ['guard']
-        	
-        # if we're in the center, stay put
-        if self.location == rg.CENTER_POINT:
-            return ['guard']
-        
+
         # if there are enemies around, attack them
         for loc, bot in game['robots'].iteritems():
             if bot.player_id != self.player_id:
@@ -70,6 +66,10 @@ class Robot:
         # move toward the center
         if ['move', rg.toward(self.location, rg.CENTER_POINT)] in valid:
             return ['move', rg.toward(self.location, rg.CENTER_POINT)]
-
-        # Guard
-        return ['guard']
+            
+        # if we're in the center, stay put
+        if self.location == rg.CENTER_POINT:
+            return ['guard']
+        
+        # Random Valid
+        return next_action
