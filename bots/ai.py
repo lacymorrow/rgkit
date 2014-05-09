@@ -46,7 +46,7 @@ class Robot:
             ['attack', rg.toward(self.location, (self.location[0], self.location[1]+1))],
             ['attack', rg.toward(self.location, (self.location[0]-1, self.location[1]))],
             ['guard'],
-            ['suicide']
+            #['suicide']
         ]
         if self.robot_id not in self.previous.keys():
             self.previous[self.robot_id] = (state, ['current', self.location], self.hp)
