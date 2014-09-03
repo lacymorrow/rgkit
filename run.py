@@ -41,9 +41,13 @@ def play(players, print_info=True, animate_render=True):
     global util
     util = {}
     if os.path.isfile('util.pickle'):
-        f = open('util.pickle', 'rb')
-        util = pickle.load(f)
-        f.close()
+        f = open('util.pickle', 'a+b')
+        try:
+            util = pickle.load(f)
+        except:
+            pass
+    else:
+        f = open('util.pickle', 'a+b')
     g = game.Game(*players, record_turns=True, util=util)
     for i in xrange(settings.max_turns):
         if print_info:
@@ -52,7 +56,6 @@ def play(players, print_info=True, animate_render=True):
 
     #global utility
     util = g.util
-    f = open('util.pickle','wb')
     pickle.dump(util, f)
     f.close()
     if print_info:
