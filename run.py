@@ -37,27 +37,13 @@ def make_player(fname):
     with open(fname) as player_code:
         return game.Player(player_code.read())
 
-def play(players, print_info=True, animate_render=True):
-    global util
-    util = {}
-    if os.path.isfile('util.pickle'):
-        f = open('util.pickle', 'a+b')
-        try:
-            util = pickle.load(f)
-        except:
-            pass
-    else:
-        f = open('util.pickle', 'a+b')
+def play(players, print_info=True, animate_render=True, util = {}):
     g = game.Game(*players, record_turns=True, util=util)
     for i in xrange(settings.max_turns):
         if print_info:
             print (' running turn %d ' % (g.turns + 1)).center(70, '-')
         g.run_turn()
 
-    #global utility
-    util = g.util
-    pickle.dump(util, f)
-    f.close()
     if print_info:
         # only import render if we need to render the game;
         # this way, people who don't have tkinter can still
@@ -70,14 +56,26 @@ def play(players, print_info=True, animate_render=True):
     return g.get_scores()
 
 def test_runs_sequentially(args):
+    global util
+    util = {}
+    if os.path.isfile('util.pickle'):
+        f = open('util.pickle', 'r+b')
+        util = pickle.load(f)
+    else:
+        util = {}
     players = [make_player(args.usercode1), make_player(args.usercode2)]
     scores = []
     for i in xrange(args.count):
         scores.append(
-            play(players, not args.headless, args.no_animate)
+            play(players, not args.headless, args.no_animate, util)
         )
         print scores[-1]
         print len(util)
+    print len(util)
+    if not f:
+        f = open('util.pickle', 'wb')
+    pickle.dump(util, f)
+    f.close()
     return scores
 
 def task(data):
