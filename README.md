@@ -1,14 +1,9 @@
 # rgkit -- Testing kit for [robot game](http://robotgame.org) [![Build Status](https://travis-ci.org/brandonhsiao/rgkit.png?branch=master)](https://travis-ci.org/brandonhsiao/rgkit) #
 
+_Artificial Intelligence_  
+_Q-Learning Agents in Robotgame.net_
+
 ![Robotgame](http://lacymorrow.com/images/github/robotgame.gif)
-
-Lacy Morrow  
-CS 4440  
-Artificial Intelligence  
-M. Parry  
-5 – 7 – 2014  
-Q-Learning Agents in Robotgame.org
-
 
 ### For my end of the year project I created a Q-Learning agent to learn to play and eventually win the Python programming game at robotgame.org.
 
@@ -113,7 +108,7 @@ The Game file was slightly edited in order to provide the global utility object 
 
 After 20,000 consecutive games over two days, my laptop burnt out, but I was able to download all of the data and utility file. With 35,000 utilities in the “brain”, the 'bots no longer suicide often or remain on spawn points long enough to die. My bot as of now is usually able to win against Suicidebot.
 
-### All of the files used for this project can be found at https://github.com/lacymorrow/rgkit/  .
+### All of the files used for this project can be found at https://github.com/lacymorrow/robotgame/  .
 To run the AI against a dummy 'bot:
 * `cd` into the directory
 * run `python run.py bots/ai.py bots/guard.py`
@@ -123,3 +118,11 @@ To run the AI against a dummy 'bot:
 * Tinker – 'sudo apt-get install python-tk'
 
 Please see this [link](http://robotgame.org/kit) for the instructions.
+
+
+Lacy Morrow  
+CS 4440  
+M. Parry  
+5 – 7 – 2014  
+Artificial Intelligence  
+Q-Learning Agents in Robotgame.org
