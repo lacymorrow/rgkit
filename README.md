@@ -28,14 +28,14 @@ The majority of robots submitted to robotgame.org, and indeed all of my previous
 * Guardbot : Moves off of spawn and guards
 * Suicidebot : Moves to closest enemy and suicides
 * Expertbot :
-	* If there are three surrounding enemies, suicide
-	* If there are three surrounding friends, guard
-	* If there is an enemy around, attack it
-	* If an enemy is closer than the center, move towards it
-	* else if able to move towards center, do so
-	* else do a random valid action
+    * If there are three surrounding enemies, suicide
+    * If there are three surrounding friends, guard
+    * If there is an enemy around, attack it
+    * If an enemy is closer than the center, move towards it
+    * else if able to move towards center, do so
+    * else do a random valid action
 
-To build the Q-Learning robot logic, dubbed 'ibot', no expert learning methods were used. States are visited, and based upon actions from those states the learner assigns a value which represents that state/action pair's desirability. For the purpose of this writing, I will refer to every learned state-action-value as a utility. In Robotgame, every turn each live robot runs it's 'logic' method called act(); every robot on a team uses the same act() method. In my Q-learner, actions are chosen based upon the highest utility value for a current state/action pair, with the exception that a state that has been visited less than N amount of times takes priority over highest utility. For every state visited, it's previous state/action utility is updated with the following formula:
+To build the Q-Learning robot logic, dubbed 'ibot', no expert learning methods were used. States are visited, and based upon actions from those states the learner assigns a value which represents that state/action pair's desirability. For the purpose of this writing, I will refer to every learned state-action-value as a utility. In Robotgame, every turn each live robot runs it's 'logic' method called `act()`; every robot on a team uses the same `act()` method. In my Q-learner, actions are chosen based upon the highest utility value for a current state/action pair, with the exception that a state that has been visited less than N amount of times takes priority over highest utility. For every state visited, it's previous state/action utility is updated with the following formula:
 
     utility[previous] = utility[previous] + α * ( utility[current] – utility[previous )
 
@@ -66,49 +66,48 @@ Since 50 robots total are generated per team per game (5 per 10 turns), each bot
 * X-position
 * Y-position
 
-The development library was provided by the creator of Robotgame.org and is called rgkit, it consists of a Game object which creates the map, spawns the respective 50 'bots per turn and runs each live robot's act() method once for 100 turns, and a Run object which handles loading the game object, rendering game animations and running multiple games if necessary. It also has the ability to run “headless” - without animations. 
+The development library was provided by the creator of Robotgame.org and is called rgkit, it consists of a Game object which creates the map, spawns the respective 50 'bots per turn and runs each live robot's `act()` method once for 100 turns, and a Run object which handles loading the game object, rendering game animations and running multiple games if necessary. It also has the ability to run “headless” - without animations. 
 
 The API provided includes the following:
-* method `rg.dist(loc1, loc2)`:
-	Returns the mathematical distance between two locations.
+* `rg.dist(loc1, loc2)`:   
+  Returns the mathematical distance between two locations.
 
-* method `rg.wdist(loc1, loc2)`:
-	Returns the walking difference between two locations. Since robots can't move diagonally, this is dx + dy.
-* method `rg.loc_types(loc)`:
-	Returns a list of the types of locations that loc is. Possible values are: 
-		* invalid — out of bounds (e.g. (-1, -5) or (23, 66))
-		* normal — on the grid
-		* spawn — spawn point
-		* obstacle — somewhere you can't walk (all the gray squares)
-	This method has no contextual information about the game—obstacle, for example, doesn't know if there's an enemy robot standing on a square, for example. All it knows is whether a square is a map obstacle. The returned list may contain a combination of these, like `['normal', 'obstacle']`
+* `rg.wdist(loc1, loc2)`:
+  Returns the walking difference between two locations. Since robots can't move diagonally, this is dx + dy.
+* `rg.loc_types(loc)`:
+  Returns a list of the types of locations that loc is. Possible values are: 
+        * invalid — out of bounds (e.g. (-1, -5) or (23, 66))
+        * normal — on the grid
+        * spawn — spawn point
+        * obstacle — somewhere you can't walk (all the gray squares)
+  This method has no contextual information about the game—obstacle, for example, doesn't know if there's an enemy robot standing on a square, for example. All it knows is whether a square is a map obstacle. The returned list may contain a combination of these, like `['normal', 'obstacle']`
 
-method rg.locs_around(loc[, filter_out=None)
-Returns a list of adjacent locations to loc. You can supply a list of location types to filter out as filter_out. For example,
-rg.locs_around(self.location, filter_out=('invalid', 'obstacle'))
-would give you a list of all locations you can move into.
+* `rg.locs_around(loc[, filter_out=None)`:
+  Returns a list of adjacent locations to loc. You can supply a list of location types to filter out as filter_out. For example, `rg.locs_around(self.location, filter_out=('invalid', 'obstacle'))` would give you a list of all locations you can move into.
 
-method rg.toward(current_loc, dest_loc)
-Returns the next point on the way from current_loc to dest_loc.
+* `rg.toward(current_loc, dest_loc)`:
+  Returns the next point on the way from current_loc to dest_loc.
 
 constant rg.CENTER_POINT
 The location of the center of the board.
 
-AttrDict rg.settings
+### AttrDict `rg.settings`
 A special type of dict that can be accessed via attributes that holds game settings.
-rg.settings.spawn_every
-how many turns pass between robots being spawned
-rg.settings.spawn_per_player
-how many robots are spawned per player
-rg.settings.robot_hp
-default robot HP
-rg.settings.attack_range
-a tuple (minimum, maximum) holding range of damage dealt by attacks
-rg.settings.collision_damage
-damage dealt by collisions
-rg.settings.suicide_damage
-damage dealt by suicides
-rg.settings.max_turns
-number of turns per game
+
+* `rg.settings.spawn_every`
+  how many turns pass between robots being spawned
+* `rg.settings.spawn_per_player`
+  how many robots are spawned per player
+* `rg.settings.robot_hp`
+  default robot HP
+`rg.settings.attack_range`
+  a tuple (minimum, maximum) holding range of damage dealt by attacks
+* `rg.settings.collision_damage`
+  damage dealt by collisions
+* `rg.settings.suicide_damage`
+  damage dealt by suicides
+* `rg.settings.max_turns`
+  number of turns per game
 
 The Game file was slightly edited in order to provide the global utility object and save it for use by future iterations after every game. This is the largest of the speed bottlenecks of running the 'bot. A few others are: Looping (3 times) through every 'bot's surrounding location to generate the state, looping through every possible action to choose the one with the highest utility (or lowest threshold), and bubbling and saving state/action data. As the amount of utilities grows, so does the amount of time required to execute one game. To compensate, some games were run with half as many turns to speed up the learning process.
 
