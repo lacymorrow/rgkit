@@ -72,9 +72,9 @@ The API provided includes the following:
 * `rg.dist(loc1, loc2)`:   
   Returns the mathematical distance between two locations.
 
-* `rg.wdist(loc1, loc2)`:
+* `rg.wdist(loc1, loc2)`:  
   Returns the walking difference between two locations. Since robots can't move diagonally, this is dx + dy.
-* `rg.loc_types(loc)`:
+* `rg.loc_types(loc)`:  
   Returns a list of the types of locations that loc is. Possible values are: 
         * invalid — out of bounds (e.g. (-1, -5) or (23, 66))
         * normal — on the grid
@@ -82,14 +82,14 @@ The API provided includes the following:
         * obstacle — somewhere you can't walk (all the gray squares)
   This method has no contextual information about the game—obstacle, for example, doesn't know if there's an enemy robot standing on a square, for example. All it knows is whether a square is a map obstacle. The returned list may contain a combination of these, like `['normal', 'obstacle']`
 
-* `rg.locs_around(loc[, filter_out=None)`:
+* `rg.locs_around(loc[, filter_out=None)`:  
   Returns a list of adjacent locations to loc. You can supply a list of location types to filter out as filter_out. For example, `rg.locs_around(self.location, filter_out=('invalid', 'obstacle'))` would give you a list of all locations you can move into.
 
-* `rg.toward(current_loc, dest_loc)`:
+* `rg.toward(current_loc, dest_loc)`:  
   Returns the next point on the way from current_loc to dest_loc.
 
-constant rg.CENTER_POINT
-The location of the center of the board.
+* _constant_ `rg.CENTER_POINT`:  
+  The location of the center of the board.
 
 ### AttrDict `rg.settings`
 A special type of dict that can be accessed via attributes that holds game settings.
@@ -100,7 +100,7 @@ A special type of dict that can be accessed via attributes that holds game setti
   how many robots are spawned per player
 * `rg.settings.robot_hp`
   default robot HP
-`rg.settings.attack_range`
+* `rg.settings.attack_range`
   a tuple (minimum, maximum) holding range of damage dealt by attacks
 * `rg.settings.collision_damage`
   damage dealt by collisions
