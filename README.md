@@ -1,4 +1,4 @@
-         # rgkit -- Testing kit for [robot game](http://robotgame.net) [![Build Status](https://travis-ci.org/brandonhsiao/rgkit.png?branch=master)](https://travis-ci.org/brandonhsiao/rgkit) #
+# rgkit -- Testing kit for [robot game](http://robotgame.net) [![Build Status](https://travis-ci.org/brandonhsiao/rgkit.png?branch=master)](https://travis-ci.org/brandonhsiao/rgkit) #
 
 _Artificial Intelligence_  
 _Q-Learning Agents in Robotgame.net_
