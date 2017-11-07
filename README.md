@@ -1,11 +1,11 @@
-# rgkit -- Testing kit for [robot game](http://robotgame.org) [![Build Status](https://travis-ci.org/brandonhsiao/rgkit.png?branch=master)](https://travis-ci.org/brandonhsiao/rgkit) #
+         # rgkit -- Testing kit for [robot game](http://robotgame.net) [![Build Status](https://travis-ci.org/brandonhsiao/rgkit.png?branch=master)](https://travis-ci.org/brandonhsiao/rgkit) #
 
 _Artificial Intelligence_  
 _Q-Learning Agents in Robotgame.net_
 
 ![Robotgame](http://lacymorrow.com/images/github/robotgame.gif)
 
-### For my end of the year project I created a Q-Learning agent to learn to play and eventually win the Python programming game at robotgame.org.
+### For my end of the year project I created a Q-Learning agent to learn to play and eventually win the Python programming game at robotgame.net.
 
 #### Robotgame is an online multiplayer programming game in the Python language. Users write code for the logic of a robot which is shared by every robot on their team. The board is made up of a 19x19 grid of squares of either 'normal', 'spawn', or 'wall' types. The default game board is a walled open circle, with spawn points making up the outermost border. The game is played with two opposing teams and a series of 100 turns. On the first and every 10 turns following, 5 robots from each team are generated in random places on spawn points. Each robot begins with 50 health. The player with the most robots at the end of 100 turns, regardless of health. If a robot is located at a spawn point when a spawn occurs, that robot dies immediately. Every turn, every robot on the playing field runs the programmed code and is able to execute one of the following actions:
 
@@ -14,7 +14,7 @@ _Q-Learning Agents in Robotgame.net_
 * Guard : Attacks do less damage
 * Suicide : Inflicts small amount of splash damage to enemies with range three
 
-The majority of robots submitted to robotgame.org, and indeed all of my previous submissions, use an expert learning method to compete. Actions are hard-coded based on the different possible states the individual robots may be in. My goal was to win against one of my very simple previous expert robots, of the following designs:
+The majority of robots submitted to robotgame.net, and indeed all of my previous submissions, use an expert learning method to compete. Actions are hard-coded based on the different possible states the individual robots may be in. My goal was to win against one of my very simple previous expert robots, of the following designs:
 
 
 * Fleebot : Always moves to an open space, avoiding enemies, walls, and spawns
@@ -61,7 +61,7 @@ Since 50 robots total are generated per team per game (5 per 10 turns), each bot
 * X-position
 * Y-position
 
-The development library was provided by the creator of Robotgame.org and is called rgkit, it consists of a Game object which creates the map, spawns the respective 50 'bots per turn and runs each live robot's `act()` method once for 100 turns, and a Run object which handles loading the game object, rendering game animations and running multiple games if necessary. It also has the ability to run “headless” - without animations. 
+The development library was provided by the creator of Robotgame.net and is called rgkit, it consists of a Game object which creates the map, spawns the respective 50 'bots per turn and runs each live robot's `act()` method once for 100 turns, and a Run object which handles loading the game object, rendering game animations and running multiple games if necessary. It also has the ability to run “headless” - without animations. 
 
 The API provided includes the following:
 * `rg.dist(loc1, loc2)`:   
@@ -117,7 +117,7 @@ To run the AI against a dummy 'bot:
 * Python – 'sudo apt-get install python'
 * Tinker – 'sudo apt-get install python-tk'
 
-Please see this [link](http://robotgame.org/kit) for the instructions.
+Please see this [link](http://robotgame.net/kit) for the instructions.
 
 
 Lacy Morrow  
@@ -125,4 +125,4 @@ CS 4440
 M. Parry  
 5 – 7 – 2014  
 Artificial Intelligence  
-Q-Learning Agents in Robotgame.org
+Q-Learning Agents in Robotgame.net
