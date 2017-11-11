@@ -5,7 +5,7 @@ _Q-Learning Agents in Robotgame.net_
 
 ![Robotgame](http://lacymorrow.com/images/github/robotgame.gif)
 
-### For my end of the year project I created a Q-Learning agent to learn to play and eventually win the Python programming game at robotgame.net.
+### For my thesis I created a Q-Learning agent to learn to play and eventually win the Python programming game at robotgame.net.
 
 #### Robotgame is an online multiplayer programming game in the Python language. Users write code for the logic of a robot which is shared by every robot on their team. The board is made up of a 19x19 grid of squares of either 'normal', 'spawn', or 'wall' types. The default game board is a walled open circle, with spawn points making up the outermost border. The game is played with two opposing teams and a series of 100 turns. On the first and every 10 turns following, 5 robots from each team are generated in random places on spawn points. Each robot begins with 50 health. The player with the most robots at the end of 100 turns, regardless of health. If a robot is located at a spawn point when a spawn occurs, that robot dies immediately. Every turn, every robot on the playing field runs the programmed code and is able to execute one of the following actions:
 
